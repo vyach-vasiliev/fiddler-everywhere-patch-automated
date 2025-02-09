@@ -47,3 +47,11 @@
 
 > [!NOTE]
 > You may need to recompile `libfiddler.so` and `libopen.so` by yourself.
+
+
+# How to modify main.js
+
+## For main.js
+
+1. Open `resources/app/out/main.js` in a text editor
+2. Open & copy content of `server/index.js` & append to `resources/app/out/main.js` at the begining.
