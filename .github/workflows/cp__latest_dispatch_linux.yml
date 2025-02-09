@@ -40,7 +40,7 @@ jobs:
         id: set_scraped_version
         run: |
           fileContent=$(cat utils/fe-version-scraper/latest_version.txt)
-          echo "scraped_version=$fileContent" >> $GITHUB_OUTPUT
+          echo "scraped_version=6.0.0" >> $GITHUB_OUTPUT
 
   download-Yui-patch:
     runs-on: ubuntu-latest
@@ -182,7 +182,6 @@ jobs:
       - name: Extract AppImage
         run: |
           chmod +x FiddlerEverywhere.AppImage
-          ./FiddlerEverywhere.AppImage --appimage-extract
           7z x -ofe_extracted ./FiddlerEverywhere.AppImage
 
       - name: Upload Fiddler Everywhere Extracted folder as an artifact
