@@ -1,4 +1,4 @@
-name: Latest Version - Workflow Dispatch
+name: Windows - Latest Version - Workflow Dispatch
 
 on:
   workflow_dispatch:

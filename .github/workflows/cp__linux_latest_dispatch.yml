@@ -40,7 +40,7 @@ jobs:
         id: set_scraped_version
         run: |
           fileContent=$(cat utils/fe-version-scraper/latest_version.txt)
-          echo "scraped_version=6.0.0" >> $GITHUB_OUTPUT
+          echo "scraped_version=$fileContent" >> $GITHUB_OUTPUT
 
   download-Yui-patch:
     runs-on: ubuntu-latest
