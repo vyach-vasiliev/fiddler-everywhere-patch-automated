@@ -79,7 +79,15 @@ jobs:
         if: env.IS_COMPATIBLE_CONT == 'true'
         run: echo "YUI_NAME=yui" >> $GITHUB_ENV
 
-      - name: Set Yui fiddler name (only for Linux)
+      - name: Set Yui name  (< 5.17.0)
+        if: env.IS_COMPATIBLE_CONT == 'false'
+        run: echo "YUI_NAME=yukihana" >> $GITHUB_ENV
+
+      - name: Set Yui fiddler name (>= 5.17.0, only for Linux)
+        if: env.IS_COMPATIBLE_CONT == 'true'
+        run: echo "Yui_FIDDLER_NAME=libfiddler" >> $GITHUB_ENV
+
+      - name: Set Yui fiddler name (< 5.17.0)
         if: env.IS_COMPATIBLE_CONT == 'false'
         run: echo "Yui_FIDDLER_NAME=libfiddler" >> $GITHUB_ENV
 
