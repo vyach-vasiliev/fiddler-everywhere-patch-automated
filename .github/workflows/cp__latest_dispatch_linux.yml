@@ -79,15 +79,7 @@ jobs:
         if: env.IS_COMPATIBLE_CONT == 'true'
         run: echo "YUI_NAME=yui" >> $GITHUB_ENV
 
-      - name: Set Yui name  (< 5.17.0)
-        if: env.IS_COMPATIBLE_CONT == 'false'
-        run: echo "YUI_NAME=yukihana" >> $GITHUB_ENV
-
-      - name: Set Yui fiddler name (>= 5.17.0)
-        if: env.IS_COMPATIBLE_CONT == 'true'
-        run: echo "Yui_FIDDLER_NAME=fiddler" >> $GITHUB_ENV
-
-      - name: Set Yui fiddler name (< 5.17.0)
+      - name: Set Yui fiddler name (only for Linux)
         if: env.IS_COMPATIBLE_CONT == 'false'
         run: echo "Yui_FIDDLER_NAME=libfiddler" >> $GITHUB_ENV
 
@@ -116,8 +108,8 @@ jobs:
           echo "Yui Fiddler URL: $YuiFiddlerUrl"
           echo "Yui HostPolicy URL: $YuiHostPolicyUrl"
 
-          curl -L $YuiFiddlerUrl -o Yui/${{ env.Yui_FIDDLER_NAME }}.so
-          curl -L $YuiHostPolicyUrl -o Yui/hostpolicy.so
+          curl -fL $YuiFiddlerUrl -o Yui/${{ env.Yui_FIDDLER_NAME }}.so
+          curl -fL $YuiHostPolicyUrl -o Yui/hostpolicy.so
 
       - name: Upload Yui folder as an artifact
         uses: actions/upload-artifact@v4
@@ -172,7 +164,7 @@ jobs:
           
             echo "Download URL: $downloadUrl"
 
-            curl -L $downloadUrl -o FiddlerEverywhere.AppImage
+            curl -fL $downloadUrl -o FiddlerEverywhere.AppImage
           
           else
             echo "SCRAPED_VERSION is empty or not set"
