@@ -168,7 +168,7 @@ jobs:
           scrapedVersion="${{ needs.scrape_fe_version.outputs.scraped_version }}"
           
           if [ -n "$scrapedVersion" ]; then
-            downloadUrl="https://downloads.getfiddler.com/linux/Fiddler%20Everywhere%20$scrapedVersion.AppImage"
+            downloadUrl="https://downloads.getfiddler.com/linux/fiddler-everywhere-$scrapedVersion.AppImage"
           
             echo "Download URL: $downloadUrl"
 
