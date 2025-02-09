@@ -183,7 +183,7 @@ jobs:
         run: |
           chmod +x FiddlerEverywhere.AppImage
           ./FiddlerEverywhere.AppImage --appimage-extract
-          mv squashfs-root fe_extracted
+          7z x -ofe_extracted ./FiddlerEverywhere.AppImage
 
       - name: Upload Fiddler Everywhere Extracted folder as an artifact
         uses: actions/upload-artifact@v4
