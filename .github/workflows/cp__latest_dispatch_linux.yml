@@ -110,14 +110,14 @@ jobs:
         run: |
           set -e
           YuiFiddlerUrl="https://github.com/project-yui/Yui-patch/releases/download/${{ env.Yui_RELEASE }}/${{ env.YUI_NAME }}-${{ env.Yui_FIDDLER_NAME }}-linux-x86_64-${{ env.Yui_RELEASE }}.so"
-          YuiHostPolicyUrl="https://github.com/project-yui/Yui-patch/releases/download/${{ env.Yui_RELEASE }}/${{ env.YUI_NAME }}-hostpolicy-linux-x86_64-${{ env.Yui_RELEASE }}.so"
+#          YuiLibOpenUrl="https://github.com/project-yui/Yui-patch/releases/download/${{ env.Yui_RELEASE }}/${{ env.YUI_NAME }}-libopen-linux-x86_64-${{ env.Yui_RELEASE }}.so"
           
           echo "Downloading files from ${{ env.Yui_RELEASE }}"
           echo "Yui Fiddler URL: $YuiFiddlerUrl"
-          echo "Yui HostPolicy URL: $YuiHostPolicyUrl"
+#          echo "Yui LibOpen URL: $YuiLibOpenUrl"
 
           curl -fL $YuiFiddlerUrl -o Yui/${{ env.Yui_FIDDLER_NAME }}.so
-          curl -fL $YuiHostPolicyUrl -o Yui/hostpolicy.so
+#          curl -fL $YuiLibOpenUrl -o Yui/libopen.so
 
       - name: Upload Yui folder as an artifact
         uses: actions/upload-artifact@v4
@@ -246,19 +246,19 @@ jobs:
             echo "libfiddler or Yui patch not found"
           fi
 
-      - name: Patch hostpolicy.so
-        run: |
-          original_hostpolicy="FE/resources/app/out/WebServer/hostpolicy.so"
-          original_copy_hostpolicy="FE/resources/app/out/WebServer/hostpolicy.original.so"
-          Yui_hostpolicy="Yui-patch/hostpolicy.so"
-
-          if [ -f "$original_hostpolicy" ] && [ -f "$Yui_hostpolicy" ]; then
-            mv "$original_hostpolicy" "$original_copy_hostpolicy"
-            cp -f "$Yui_hostpolicy" "$original_hostpolicy"
-            echo "Renamed $original_hostpolicy to $original_copy_hostpolicy & Applied Yui Patch"
-          else
-            echo "original hostpolicy.so or Yui hostpolicy not found"
-          fi
+#      - name: Patch hostpolicy.so
+#        run: |
+#          original_hostpolicy="FE/resources/app/out/WebServer/hostpolicy.so"
+#          original_copy_hostpolicy="FE/resources/app/out/WebServer/hostpolicy.original.so"
+#          Yui_hostpolicy="Yui-patch/hostpolicy.so"
+#
+#          if [ -f "$original_hostpolicy" ] && [ -f "$Yui_hostpolicy" ]; then
+#            mv "$original_hostpolicy" "$original_copy_hostpolicy"
+#            cp -f "$Yui_hostpolicy" "$original_hostpolicy"
+#            echo "Renamed $original_hostpolicy to $original_copy_hostpolicy & Applied Yui Patch"
+#          else
+#            echo "original hostpolicy.so or Yui hostpolicy not found"
+#          fi
 
       - name: Clean Yui-patch
         run: rm -rf Yui-patch
