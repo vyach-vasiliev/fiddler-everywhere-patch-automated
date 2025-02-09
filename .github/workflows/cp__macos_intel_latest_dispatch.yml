@@ -1,0 +1,354 @@
+name: MacOS - Latest Version - Workflow Dispatch
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape_fe_version:
+    runs-on: macos-13
+    outputs:
+      scraped_version: ${{ steps.set_scraped_version.outputs.scraped_version }}
+
+    env:
+      NODE_JS_VERSION: 23.1.0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ env.NODE_JS_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_JS_VERSION }}
+
+      - name: Cache Node.js dependencies
+        uses: actions/cache@v4
+        with:
+          path: utils/fe-version-scraper/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_JS_VERSION }}-${{ hashFiles('utils/fe-version-scraper/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_JS_VERSION }}-
+
+      - name: Install Node.js dependencies
+        run: npm ci
+        working-directory: utils/fe-version-scraper
+
+      - name: Run the Node.js script
+        run: node .
+        working-directory: utils/fe-version-scraper
+
+      - name: Read & Set Env
+        id: set_scraped_version
+        run: |
+          fileContent=$(cat utils/fe-version-scraper/latest_version.txt)
+          echo "scraped_version=$fileContent" >> $GITHUB_OUTPUT
+
+  download-Yui-patch:
+    runs-on: macos-13
+    needs:
+      - scrape_fe_version
+
+    env:
+      SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
+
+    outputs:
+      is-compatible-cont: ${{ steps.is-compatible-cont.outputs.is-compatible-cont }}
+      Yui-fiddler-name: ${{ steps.Yui-fiddler-name.outputs.Yui-fiddler-name }}
+
+    steps:
+      - name: Compare SCRAPED_VERSION with 5.17.0
+        id: scraped_version_check
+        run: |
+          scrapedVersion=${{ env.SCRAPED_VERSION }}
+          compareVersion="5.17.0"
+          
+          if [ -n "$scrapedVersion" ]; then
+              if [ "$(printf '%s\n' "$compareVersion" "$scrapedVersion" | sort -V | head -n1)" = "$compareVersion" ]; then
+                  echo "IS_COMPATIBLE_CONT=true" >> $GITHUB_ENV
+              else
+                  echo "IS_COMPATIBLE_CONT=false" >> $GITHUB_ENV
+              fi
+          else
+              echo "IS_COMPATIBLE_CONT=false" >> $GITHUB_ENV
+          fi
+
+      - name: Set IS_COMPATIBLE_CONT as Output
+        id: is-compatible-cont
+        run: echo "is-compatible-cont=${{ env.IS_COMPATIBLE_CONT }}" >> $GITHUB_OUTPUT
+
+      - name: Set Yui name  (>= 5.17.0)
+        if: env.IS_COMPATIBLE_CONT == 'true'
+        run: echo "YUI_NAME=yui" >> $GITHUB_ENV
+
+      - name: Set Yui name  (< 5.17.0)
+        if: env.IS_COMPATIBLE_CONT == 'false'
+        run: echo "YUI_NAME=yukihana" >> $GITHUB_ENV
+
+      - name: Set Yui fiddler name (>= 5.17.0)
+        if: env.IS_COMPATIBLE_CONT == 'true'
+        run: echo "Yui_FIDDLER_NAME=fiddler" >> $GITHUB_ENV
+
+      - name: Set Yui fiddler name (< 5.17.0)
+        if: env.IS_COMPATIBLE_CONT == 'false'
+        run: echo "Yui_FIDDLER_NAME=libfiddler" >> $GITHUB_ENV
+
+      - name: Set Yui_FIDDLER_NAME as Output
+        id: Yui-fiddler-name
+        run: echo "Yui-fiddler-name=${{ env.Yui_FIDDLER_NAME }}" >> $GITHUB_OUTPUT
+
+      - name: Create Yui directory
+        run: mkdir -p Yui
+
+      - name: Set Yui Release (>= 5.17.0)
+        if: env.IS_COMPATIBLE_CONT == 'true'
+        run: echo "Yui_RELEASE=continuous" >> $GITHUB_ENV
+
+      - name: Set Yui Release (< 5.17.0)
+        if: env.IS_COMPATIBLE_CONT == 'false'
+        run: echo "Yui_RELEASE=v1.0.9" >> $GITHUB_ENV
+
+      - name: Download Yui Patch
+        run: |
+          set -e
+          YuiFiddlerUrl="https://github.com/project-yui/Yui-patch/releases/download/${{ env.Yui_RELEASE }}/${{ env.YUI_NAME }}-${{ env.Yui_FIDDLER_NAME }}-mac-x86_64-${{ env.Yui_RELEASE }}.dylib"
+          
+          echo "Downloading files from ${{ env.Yui_RELEASE }}"
+          echo "Yui Fiddler URL: $YuiFiddlerUrl"
+
+          curl -fL $YuiFiddlerUrl -o Yui/${{ env.Yui_FIDDLER_NAME }}.dylib
+
+      - name: Upload Yui folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yui-patch
+          path: Yui/
+          if-no-files-found: error
+
+  download-msojocs-server:
+    runs-on: macos-13
+
+    steps:
+      - name: Set up Git
+        run: |
+          git init
+          git remote add origin https://github.com/msojocs/fiddler-everywhere-enhance.git
+          git config core.sparseCheckout true
+
+      - name: Configure sparse-checkout to download the server directory
+        run: |
+          echo "server" >> .git/info/sparse-checkout
+          git pull origin main
+
+      - name: Move the downloaded directory to the target folder
+        run: |
+          mkdir -p msojocs
+          mv server msojocs/
+
+      - name: List files in the msojocs/server directory
+        run: ls -R msojocs/server
+
+      - name: Upload msojocs folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msojocs-patch
+          path: msojocs/
+          if-no-files-found: error
+
+  download-fiddler-everywhere:
+    runs-on: macos-13
+
+    needs:
+      - scrape_fe_version
+
+    steps:
+      - name: Build URL & Download
+        run: |
+          scrapedVersion="${{ needs.scrape_fe_version.outputs.scraped_version }}"
+          
+          if [ -n "$scrapedVersion" ]; then
+            downloadUrl="https://downloads.getfiddler.com/mac/fiddler-everywhere-$scrapedVersion.dmg"
+          
+            echo "Download URL: $downloadUrl"
+
+            curl -fL $downloadUrl -o FiddlerEverywhere.dmg
+          
+          else
+            echo "SCRAPED_VERSION is empty or not set"
+            exit 1
+          fi
+
+      - name: Extract DMG
+        run: |
+          hdiutil attach FiddlerEverywhere.dmg
+          cd /Volumes/FiddlerEverywhere
+          mkdir -p ./fe_extracted 
+          cp -rf FiddlerEverywhere.app ./fe_extracted
+          hdiutil detach /Volumes/FiddlerEverywhere
+
+      - name: Upload Fiddler Everywhere Extracted folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe_extracted
+          path: fe_extracted/
+          if-no-files-found: error
+
+  patch_fe:
+    runs-on: macos-13
+
+    needs:
+      - download-Yui-patch
+      - download-msojocs-server
+      - download-fiddler-everywhere
+      - scrape_fe_version
+
+    env:
+      SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
+
+    outputs:
+      patched-fe-name: ${{ steps.rename-fe.outputs.patched-fe-name }}
+
+    steps:
+      - name: Download Yukuhana-Patch
+        uses: actions/download-artifact@v4
+        with:
+          name: Yui-patch
+          path: Yui-patch
+
+      - name: Download msojocs-Server
+        uses: actions/download-artifact@v4
+        with:
+          name: msojocs-patch
+          path: msojocs-patch
+
+      - name: Download FE
+        uses: actions/download-artifact@v4
+        with:
+          name: fe_extracted
+          path: fe_extracted
+
+      - name: List the contents of the downloaded artifacts
+        run: |
+          ls -R Yui-patch
+          ls -R msojocs-patch
+          ls -R fe_extracted
+
+      - name: Rename main FE folder
+        run: mv fe_extracted FE
+
+      - name: Patch fiddler.dylib
+        run: |
+          original_fiddler="FE/Contents/Frameworks/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dylib"
+          Yui_fiddler="Yui-patch/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dylib"
+          
+          if [ -f "$original_fiddler" ] && [ -f "$Yui_fiddler" ]; then
+            cp -f "$Yui_fiddler" "$original_fiddler"
+            echo "Replaced $original_fiddler with $Yui_fiddler"
+          else
+            echo "fiddler.dylib or Yui patch not found"
+          fi
+
+      - name: Clean Yui-patch
+        run: rm -rf Yui-patch
+
+      - name: Copy Server Folder
+        run: |
+          source_server_folder="msojocs-patch/server/file"
+          destination_server_folder="FE/Contents/Resources/app/out"
+          
+          if [ -d "$source_server_folder" ]; then
+            cp -r "$source_server_folder" "$destination_server_folder"
+          else
+            echo "Source Server Folder not found"
+          fi
+
+      - name: Patch main.js to main.original.js
+        run: |
+          source_main="FE/Contents/Resources/app/out/main.js"
+          new_main="FE/Contents/Resources/app/out/main.original.js"
+          source_index="msojocs-patch/server/index.js"
+          
+          if [ -f "$source_main" ] && [ -f "$source_index" ]; then
+            cp "$source_main" "$new_main"
+            cat "$source_index" "$source_main" > "$source_main.tmp" && mv "$source_main.tmp" "$source_main"
+          else
+            echo "Source main.js or index.js (from server) not found"
+          fi
+
+      - name: Patch main.XXX.js to main.XXX.original.js
+        run: |
+          directory='FE/Contents/Resources/app/out/WebServer/ClientApp/dist'
+          
+          source_main=$(find $directory -type f -name "main*")
+          
+          if [ -n "$source_main" ]; then
+              originalName=$(basename "$source_main" .js)
+              originalFullPath="$source_main"
+              new_main_name="$originalName.original.js"
+          
+              cp "$originalFullPath" "$directory/$new_main_name"
+              echo "File renamed from $(basename "$source_main") to $new_main_name"
+
+              echo "Finding and Replacing now"
+
+              source_content=$(cat "$originalFullPath")
+
+              searchText1="https://api.getfiddler.com"
+              replaceText1="http://127.0.0.1:5678/api.getfiddler.com"
+              updatedText1=${source_content//$searchText1/$replaceText1}
+
+              searchText2="https://identity.getfiddler.com"
+              replaceText2="http://127.0.0.1:5678/identity.getfiddler.com"
+              finalUpdatedText=${updatedText1//$searchText2/$replaceText2}
+
+              echo "$finalUpdatedText" > "$originalFullPath"
+
+              echo "MAIN_XXX_NAME=$originalName" >> $GITHUB_ENV            
+          else
+            echo "No file found starting with 'main' in the specified directory. (Main,XXX.js)"
+          fi
+
+      - name: Clean msojocs-patch
+        run: rm -rf msojocs-patch
+
+      - name: Add patch.json
+        run: |
+          patch_json="FE/resources/app/out/WebServer/patch.json"
+          
+          jsonContent=$(cat <<EOF
+          {
+            "ClientApp/dist/$MAIN_XXX_NAME.js": {
+              "target": "ClientApp/dist/$MAIN_XXX_NAME.original.js",
+              "content": "",
+              "cur": 0,
+              "start": 0,
+              "end": 1
+            },
+            "../main.js": {
+              "target": "../main.original.js",
+              "content": "",
+              "cur": 0,
+              "start": 0,
+              "end": 1
+            }
+          }
+          EOF
+          )
+          echo "$jsonContent" > "$patch_json"
+          echo "JSON file created successfully at $patch_json"
+
+      - name: Rename FE
+        id: rename-fe
+        run: |
+          if [ -d FE ]; then
+            newName="Fiddler-Everywhere-V${{ env.SCRAPED_VERSION }}-Patched"
+            mv FE "$newName"
+            echo "patched-fe-name=$newName" >> $GITHUB_OUTPUT
+          else
+            echo "FE Folder not found!?"
+          fi
+
+      - name: Upload Artifact for Patched FE
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ steps.rename-fe.outputs.patched-fe-name }}"
+          path: "${{ steps.rename-fe.outputs.patched-fe-name }}/"
+          if-no-files-found: error
