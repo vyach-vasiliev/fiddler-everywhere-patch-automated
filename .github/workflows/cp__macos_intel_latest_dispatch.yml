@@ -165,7 +165,7 @@ jobs:
           scrapedVersion="${{ needs.scrape_fe_version.outputs.scraped_version }}"
           
           if [ -n "$scrapedVersion" ]; then
-            downloadUrl="https://downloads.getfiddler.com/mac/fiddler-everywhere-$scrapedVersion.dmg"
+            downloadUrl="https://downloads.getfiddler.com/mac/Fiddler%20Everywhere%20$scrapedVersion.dmg"
           
             echo "Download URL: $downloadUrl"
 
