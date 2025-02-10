@@ -290,6 +290,7 @@ jobs:
 
       - name: Patch main.XXX.js to main.XXX.original.js
         run: |
+          set -e
           directory='FE/Contents/Resources/app/out/WebServer/ClientApp/dist'
           
           source_main=$(find $directory -type f -name "main*")
