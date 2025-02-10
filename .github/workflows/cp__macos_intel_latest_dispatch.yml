@@ -250,7 +250,7 @@ jobs:
 
       - name: Patch fiddler.dylib
         run: |
-          original_fiddler="FE/Contents/Frameworks/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dylib"
+          original_fiddler="FE/Contents/Frameworks/libfiddler.dylib"
           Yui_fiddler="Yui-patch/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dylib"
           
           if [ -f "$original_fiddler" ] && [ -f "$Yui_fiddler" ]; then
@@ -326,7 +326,7 @@ jobs:
 
       - name: Add patch.json
         run: |
-          patch_json="FE/resources/app/out/WebServer/patch.json"
+          patch_json="FE/Contents/Resources/app/out/WebServer/patch.json"
           
           jsonContent=$(cat <<EOF
           {
