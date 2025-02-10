@@ -154,7 +154,7 @@ jobs:
           if-no-files-found: error
 
   download-fiddler-everywhere:
-    runs-on: ubuntu-latest
+    runs-on: macos-13
 
     needs:
       - scrape_fe_version
@@ -186,19 +186,16 @@ jobs:
           scrapedVersion="${{ needs.scrape_fe_version.outputs.scraped_version }}"
           
           if [ -n "$scrapedVersion" ]; then
-            sudo apt update
-            sudo apt install dmg2img
-          
-            dmg2img FiddlerEverywhere.dmg FiddlerEverywhere.cdr
+            hdiutil convert FiddlerEverywhere.dmg -format UDTO -o FiddlerEverywhere.cdr
+            hdiutil attach FiddlerEverywhere.cdr
             rm FiddlerEverywhere.dmg
           
-            mkdir -p dmg_extracted
+            cp -rf "/Volumes/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app"
+            
             mkdir -p fe_extracted
+            cp -rf "Fiddler Everywhere.app" fe_extracted
           
-            7z x -odmg_extracted FiddlerEverywhere.cdr
-          
-            cp -rf "dmg_extracted/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app" fe_extracted
-            rm -rf dmg_extracted
+            hdiutil detach "/Volumes/Fiddler Everywhere $scrapedVersion"
           else
             echo "SCRAPED_VERSION is empty or not set"
             exit 1
@@ -212,7 +209,7 @@ jobs:
           if-no-files-found: error
 
   patch_fe:
-    runs-on: ubuntu-latest
+    runs-on: macos-13
 
     needs:
       - download-Yui-patch
