@@ -186,14 +186,10 @@ jobs:
           scrapedVersion="${{ needs.scrape_fe_version.outputs.scraped_version }}"
           
           if [ -n "$scrapedVersion" ]; then
-            hdiutil convert FiddlerEverywhere.dmg -format UDTO -o FiddlerEverywhere.cdr
-            hdiutil attach FiddlerEverywhere.cdr
-            rm FiddlerEverywhere.dmg
-          
-            cp -rf "/Volumes/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app"
-            
             mkdir -p fe_extracted
-            cp -rf "Fiddler Everywhere.app" fe_extracted
+            hdiutil attach FiddlerEverywhere.dmg
+          
+            cp -rf "/Volumes/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app" fe_extracted
           
             hdiutil detach "/Volumes/Fiddler Everywhere $scrapedVersion"
           else
