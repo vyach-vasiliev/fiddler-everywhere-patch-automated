@@ -309,13 +309,12 @@ jobs:
 
               searchText1="https://api.getfiddler.com"
               replaceText1="http://127.0.0.1:5678/api.getfiddler.com"
-              updatedText1=${source_content//$searchText1/$replaceText1}
 
               searchText2="https://identity.getfiddler.com"
               replaceText2="http://127.0.0.1:5678/identity.getfiddler.com"
-              finalUpdatedText=${updatedText1//$searchText2/$replaceText2}
-
-              echo "$finalUpdatedText" > "$originalFullPath"
+        
+              sed -i '' "s|$searchText1|$replaceText1|g" "$originalFullPath"
+              sed -i '' "s|$searchText2|$replaceText2|g" "$originalFullPath"
 
               echo "MAIN_XXX_NAME=$originalName" >> $GITHUB_ENV            
           else
