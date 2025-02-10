@@ -178,11 +178,13 @@ jobs:
 
       - name: Extract DMG
         run: |
-          hdiutil attach FiddlerEverywhere.dmg
-          cd /Volumes/FiddlerEverywhere
-          mkdir -p ./fe_extracted 
-          cp -rf FiddlerEverywhere.app ./fe_extracted
-          hdiutil detach /Volumes/FiddlerEverywhere
+          hdiutil convert FiddlerEverywhere.dmg -format UDTO -o FiddlerEverywhere.cdr
+          hdiutil attach FiddlerEverywhere.cdr
+          rm FiddlerEverywhere.dmg
+          cd "/Volumes/Fiddler Everywhere $scrapedVersion"
+          mkdir -p ./fe_extracted
+          cp -rf "Fiddler Everywhere.app" ./fe_extracted
+          hdiutil detach "/Volumes/Fiddler Everywhere $scrapedVersion"
 
       - name: Upload Fiddler Everywhere Extracted folder as an artifact
         uses: actions/upload-artifact@v4
