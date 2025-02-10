@@ -192,12 +192,13 @@ jobs:
             dmg2img FiddlerEverywhere.dmg FiddlerEverywhere.cdr
             rm FiddlerEverywhere.dmg
           
-            mkdir -p ~/mnt
+            mkdir -p dmg_extracted
             mkdir -p fe_extracted
-            mount -o loop FiddlerEverywhere.cdr ~/mnt
           
-            cp -rf "~/mnt/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app" fe_extracted
-            umount ~/mnt
+            7z x -odmg_extracted FiddlerEverywhere.cdr
+          
+            cp -rf "dmg_extracted/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app" fe_extracted
+            rm -rf dmg_extracted
           else
             echo "SCRAPED_VERSION is empty or not set"
             exit 1
