@@ -350,13 +350,16 @@ jobs:
           echo "$jsonContent" > "$patch_json"
           echo "JSON file created successfully at $patch_json"
 
-      - name: Rename FE
+      - name: Rename FE and Create DMG
         id: rename-fe
         run: |
           if [ -d FE ]; then
             newName="Fiddler-Everywhere-V${{ env.SCRAPED_VERSION }}-Patched"
             mv FE "$newName"
-            echo "patched-fe-name=$newName" >> $GITHUB_OUTPUT
+          
+            hdiutil create -volname "TempDMG" -srcfolder "$newName" -ov -format UDZO "$newName.dmg"
+
+            echo "patched-fe-name=$newName.dmg" >> $GITHUB_OUTPUT
           else
             echo "FE Folder not found!?"
           fi
