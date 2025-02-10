@@ -295,6 +295,7 @@ jobs:
             Write-Host "Replaced $original_fiddler with $Yui_fiddler"
           } else {
             Write-Host "fiddler / libfiddler or Yui patch not found"
+            Exit 1
           }
         shell: pwsh
 

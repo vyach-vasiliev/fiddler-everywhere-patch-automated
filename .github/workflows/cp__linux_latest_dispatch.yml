@@ -241,6 +241,7 @@ jobs:
             echo "Replaced $original_fiddler with $Yui_fiddler"
           else
             echo "libfiddler or Yui patch not found"
+            exit 1
           fi
 
       - name: Clean Yui-patch
