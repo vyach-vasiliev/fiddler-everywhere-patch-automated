@@ -190,7 +190,7 @@ jobs:
             hdiutil convert FiddlerEverywhere.dmg -format UDTO -o FiddlerEverywhere.cdr
             hdiutil attach FiddlerEverywhere.cdr
           
-            cp -rf "/Volumes/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app" fe_extracted
+            cp -rf "/Volumes/Fiddler Everywhere $scrapedVersion/Fiddler Everywhere.app/"* fe_extracted
           
             hdiutil detach "/Volumes/Fiddler Everywhere $scrapedVersion"
           else
